@@ -1,0 +1,82 @@
+﻿name: CI
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: ${{ matrix.compiler }}
+    # Pinned: ubuntu-latest would change compilers silently
+    runs-on: ubuntu-26.04
+    strategy:
+      # Compilers are compared, so one failing doesn't cancel the rest
+      fail-fast: false
+      matrix:
+        include:
+          - compiler: GCC
+            cxx: g++
+            build-type: Debug
+            cxxflags: ""
+            imgui-tag: v1.92.9b
+            docked: OFF
+          - compiler: Clang
+            cxx: clang++
+            build-type: Debug
+            cxxflags: ""
+            imgui-tag: v1.92.9b
+            docked: OFF
+          # FMA contraction, as in users' -march=native and /arch:AVX2 builds. Only optimized code fuses.
+          - compiler: GCC FMA
+            cxx: g++
+            build-type: Release
+            cxxflags: -march=x86-64-v3
+            imgui-tag: v1.92.9b
+            docked: OFF
+          # Docking branch: every widget test docked, plus test_viewports.cpp
+          - compiler: GCC docking
+            cxx: g++
+            build-type: Debug
+            cxxflags: ""
+            imgui-tag: v1.92.9b-docking
+            docked: ON
+          # The minimum: keep in sync with the #error in imok.h
+          - compiler: GCC ImGui 1.92.6
+            cxx: g++
+            build-type: Debug
+            cxxflags: ""
+            imgui-tag: v1.92.6
+            docked: OFF
+
+    steps:
+      - uses: actions/checkout@v7
+
+      # MSVC reads BOM-less files in the system code page, so non-ASCII warns (C4819) on CJK
+      # systems. 'if', not '! grep': bash -e ignores a failing '!' pipeline.
+      - name: Check encodings
+        run: |
+          if grep -nP '[^\x00-\x7F]' imok.h imok_color.h imok_internal.h imok_color_internal.h imok.cpp imok_demo.cpp example/main.cpp tests/*.cpp tests/*.h; then
+            echo "Non-ASCII characters in a source file (see above)"; exit 1
+          fi
+          if [ "$(head -c 3 imok_color.cpp | od -An -tx1 | tr -d ' ')" != "efbbbf" ]; then
+            echo "imok_color.cpp lost its UTF-8 BOM"; exit 1
+          fi
+
+      - name: Configure
+        run: >
+          cmake -S tests -B build
+          -DCMAKE_BUILD_TYPE=${{ matrix.build-type }}
+          -DCMAKE_CXX_COMPILER=${{ matrix.cxx }}
+          "-DCMAKE_CXX_FLAGS=${{ matrix.cxxflags }}"
+          -DIMOK_WARNINGS_AS_ERRORS=ON
+          -DIMOK_IMGUI_TAG=${{ matrix.imgui-tag }}
+          -DIMOK_TEST_DOCKED=${{ matrix.docked }}
+
+      - name: Build
+        run: cmake --build build --parallel
+
+      - name: Test
+        run: ctest --test-dir build --output-on-failure

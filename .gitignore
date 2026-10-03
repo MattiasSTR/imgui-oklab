@@ -1,0 +1,22 @@
+# Build output
+build/
+out/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+
+# Other IDEs
+.idea/
+.vscode/
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Dear ImGui window layout
+imgui.ini
+
+/CMakeLists.txt
+*.editorconfig
