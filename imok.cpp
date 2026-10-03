@@ -718,7 +718,7 @@ namespace ImOk
             }
             const Internal::ColorTooltipText text{ Internal::ColorTooltipLines(col, alpha, storage) };
             const char* const lines[]{ text.stored, text.hex, text.oklch };
-            SwatchTooltip(shown, previewFlags, lines, IM_ARRAYSIZE(lines));
+            SwatchTooltip(shown, previewFlags, lines, IM_COUNTOF(lines));
         }
 
         void LightSwatchTooltip(const LinearSrgb& color, const float* kelvin, float intensity, ImOkLightUnit unit,
@@ -730,7 +730,7 @@ namespace ImOk
             }
             const Internal::LightTooltipText text{ Internal::LightTooltipLines(color, kelvin, intensity, unit) };
             const char* const lines[]{ text.shows, text.passes };
-            SwatchTooltip(shown, previewFlags, lines, IM_ARRAYSIZE(lines));
+            SwatchTooltip(shown, previewFlags, lines, IM_COUNTOF(lines));
         }
 
         // Returns the number of floats accepted (3 or 4), or 0

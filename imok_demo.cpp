@@ -218,7 +218,7 @@ namespace ImOk
             const ImVec2 size{ ImGui::GetFrameHeight() * 1.5f, ImGui::GetFrameHeight() };
 
             ImGui::PushID(encodedTwice ? "twice" : "once");
-            for (int i{ 0 }; i < IM_ARRAYSIZE(COLORS); ++i)
+            for (int i{ 0 }; i < IM_COUNTOF(COLORS); ++i)
             {
                 const ImVec4 style{ ImGui::GetStyleColorVec4(COLORS[i]) };
                 ImVec4 shown{ style.x, style.y, style.z, 1.0f };

@@ -368,17 +368,17 @@ namespace ImOk
             };
             static const LightUnitInfo INFOS[ImOkLightUnit_COUNT]{
                 { "", "Unitless: a multiplier your engine defines", 0.0f, 10000.0f, 0.001f,
-                  UNITLESS_REFERENCES, IM_ARRAYSIZE(UNITLESS_REFERENCES) },
+                  UNITLESS_REFERENCES, IM_COUNTOF(UNITLESS_REFERENCES) },
                 { "lm", "Lumen: total light from a source", 0.0f, 1000000.0f, 0.1f,
-                  LUMEN_REFERENCES, IM_ARRAYSIZE(LUMEN_REFERENCES) },
+                  LUMEN_REFERENCES, IM_COUNTOF(LUMEN_REFERENCES) },
                 { "cd", "Candela: light per direction", 0.0f, 1000000.0f, 0.01f,
-                  CANDELA_REFERENCES, IM_ARRAYSIZE(CANDELA_REFERENCES) },
+                  CANDELA_REFERENCES, IM_COUNTOF(CANDELA_REFERENCES) },
                 { "lx", "Lux: light arriving on a surface", 0.0f, 150000.0f, 0.0001f,
-                  LUX_REFERENCES, IM_ARRAYSIZE(LUX_REFERENCES) },
+                  LUX_REFERENCES, IM_COUNTOF(LUX_REFERENCES) },
                 { "nits", "Nits: brightness of a surface (cd/m2)", 0.0f, 1000000.0f, 0.001f,
-                  NITS_REFERENCES, IM_ARRAYSIZE(NITS_REFERENCES) },
+                  NITS_REFERENCES, IM_COUNTOF(NITS_REFERENCES) },
                 { "EV", "EV100: exposure value at ISO 100, log2", -12.0f, 18.0f, 0.0f,
-                  EV100_REFERENCES, IM_ARRAYSIZE(EV100_REFERENCES) },
+                  EV100_REFERENCES, IM_COUNTOF(EV100_REFERENCES) },
             };
             IM_ASSERT(unit >= 0 && unit < ImOkLightUnit_COUNT && "Invalid ImOkLightUnit.");
             return INFOS[unit];
@@ -406,7 +406,7 @@ namespace ImOk
                 { 7849.0f, "LCD and CRT screens: 6500-9500 K" },
                 { 20125.0f, "Clear blue poleward sky: 15000-27000 K, off the scale" },
             };
-            return { REFERENCES, IM_ARRAYSIZE(REFERENCES) };
+            return { REFERENCES, IM_COUNTOF(REFERENCES) };
         }
 
         // An intensity to a bar position in [0, 1] and back, clamped to the unit's range. On a
