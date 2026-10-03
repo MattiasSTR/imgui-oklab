@@ -11,27 +11,28 @@ permissions:
 jobs:
   test:
     name: ${{ matrix.compiler }}
-    # Pinned: ubuntu-latest would change compilers silently
-    runs-on: ubuntu-26.04
+    # Pinned: a -latest label would change compilers silently
+    runs-on: ${{ matrix.os }}
+    # bash on every OS: Windows defaults to PowerShell
+    defaults:
+      run:
+        shell: bash
     strategy:
       # Compilers are compared, so one failing doesn't cancel the rest
       fail-fast: false
       matrix:
         include:
-          - compiler: GCC
+          # The minimum: keep in sync with the #error in imok.h
+          - compiler: GCC ImGui 1.92.6
+            os: ubuntu-26.04
             cxx: g++
             build-type: Debug
             cxxflags: ""
-            imgui-tag: v1.92.9b
-            docked: OFF
-          - compiler: Clang
-            cxx: clang++
-            build-type: Debug
-            cxxflags: ""
-            imgui-tag: v1.92.9b
+            imgui-tag: v1.92.6
             docked: OFF
           # FMA contraction, as in users' -march=native and /arch:AVX2 builds. Only optimized code fuses.
           - compiler: GCC FMA
+            os: ubuntu-26.04
             cxx: g++
             build-type: Release
             cxxflags: -march=x86-64-v3
@@ -39,17 +40,26 @@ jobs:
             docked: OFF
           # Docking branch: every widget test docked, plus test_viewports.cpp
           - compiler: GCC docking
+            os: ubuntu-26.04
             cxx: g++
             build-type: Debug
             cxxflags: ""
             imgui-tag: v1.92.9b-docking
             docked: ON
-          # The minimum: keep in sync with the #error in imok.h
-          - compiler: GCC ImGui 1.92.6
-            cxx: g++
+          # VS 2022, as the daily local build
+          - compiler: MSVC
+            os: windows-2025
+            cxx: ""
             build-type: Debug
             cxxflags: ""
-            imgui-tag: v1.92.6
+            imgui-tag: v1.92.9b
+            docked: OFF
+          - compiler: Apple Clang
+            os: macos-26
+            cxx: clang++
+            build-type: Debug
+            cxxflags: ""
+            imgui-tag: v1.92.9b
             docked: OFF
 
     steps:
@@ -58,6 +68,8 @@ jobs:
       # MSVC reads BOM-less files in the system code page, so non-ASCII warns (C4819) on CJK
       # systems. 'if', not '! grep': bash -e ignores a failing '!' pipeline.
       - name: Check encodings
+        # Linux only: macOS grep has no -P, and the files are the same everywhere
+        if: runner.os == 'Linux'
         run: |
           if grep -nP '[^\x00-\x7F]' imok.h imok_color.h imok_internal.h imok_color_internal.h imok.cpp imok_demo.cpp example/main.cpp tests/*.cpp tests/*.h; then
             echo "Non-ASCII characters in a source file (see above)"; exit 1
@@ -66,18 +78,20 @@ jobs:
             echo "imok_color.cpp lost its UTF-8 BOM"; exit 1
           fi
 
+      # Compiler and flags only when set: an empty CMAKE_CXX_FLAGS drops MSVC's default /EHsc
       - name: Configure
         run: >
           cmake -S tests -B build
           -DCMAKE_BUILD_TYPE=${{ matrix.build-type }}
-          -DCMAKE_CXX_COMPILER=${{ matrix.cxx }}
-          "-DCMAKE_CXX_FLAGS=${{ matrix.cxxflags }}"
+          ${{ matrix.cxx && format('-DCMAKE_CXX_COMPILER={0}', matrix.cxx) || '' }}
+          ${{ matrix.cxxflags && format('"-DCMAKE_CXX_FLAGS={0}"', matrix.cxxflags) || '' }}
           -DIMOK_WARNINGS_AS_ERRORS=ON
           -DIMOK_IMGUI_TAG=${{ matrix.imgui-tag }}
           -DIMOK_TEST_DOCKED=${{ matrix.docked }}
 
+      # --config and -C: the Visual Studio generator ignores CMAKE_BUILD_TYPE
       - name: Build
-        run: cmake --build build --parallel
+        run: cmake --build build --parallel --config ${{ matrix.build-type }}
 
       - name: Test
-        run: ctest --test-dir build --output-on-failure
+        run: ctest --test-dir build --output-on-failure -C ${{ matrix.build-type }}
